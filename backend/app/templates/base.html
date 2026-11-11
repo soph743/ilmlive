@@ -8,6 +8,11 @@
   </head>
   <body>
     <main>
+      {% with messages = get_flashed_messages() %}
+        {% for message in messages %}
+          <p class="flash">{{ message }}</p>
+        {% endfor %}
+      {% endwith %}
       {% block content %}{% endblock %}
     </main>
   </body>

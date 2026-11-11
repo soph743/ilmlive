@@ -6,3 +6,6 @@ __pycache__/
 *.pyc
 .venv/
 venv/
+
+# Local user store (temporary, contains password hashes)
+backend/instance/

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block title %}Viewer home · ilm live{% endblock %}
+
+{% block content %}
+  <h1>Viewer home</h1>
+  <p>Logged in as {{ session.email }}</p>
+  <form method="post" action="{{ url_for('auth.logout') }}">
+    <button type="submit">Log out</button>
+  </form>
+{% endblock %}

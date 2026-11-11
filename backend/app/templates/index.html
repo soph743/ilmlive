@@ -3,4 +3,9 @@
 {% block content %}
   <h1>ilm live</h1>
   <p>A livestreaming platform for Islamic education.</p>
+  {% if session.email %}
+    <p><a href="{{ url_for('main.' ~ session.role ~ '_home') }}">Go to your home page</a></p>
+  {% else %}
+    <p><a href="{{ url_for('auth.login') }}">Log in</a> or <a href="{{ url_for('auth.signup') }}">sign up</a></p>
+  {% endif %}
 {% endblock %}
