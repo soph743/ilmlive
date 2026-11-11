@@ -7,5 +7,5 @@ __pycache__/
 .venv/
 venv/
 
-# Local user store (temporary, contains password hashes)
-backend/instance/
+# Firebase service account key (secret!)
+*service-account*.json

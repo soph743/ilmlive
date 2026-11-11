@@ -1,6 +1,7 @@
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
-from .. import users
+from .. import firebase
+from ..firebase import AuthError
 from .main import home_for
 
 auth_bp = Blueprint("auth", __name__)
@@ -8,6 +9,7 @@ auth_bp = Blueprint("auth", __name__)
 
 def _log_in(user):
     session.clear()
+    session["uid"] = user["uid"]
     session["email"] = user["email"]
     session["role"] = user["role"]
 
@@ -15,21 +17,22 @@ def _log_in(user):
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
-        email = users.normalize_email(request.form.get("email"))
+        email = firebase.normalize_email(request.form.get("email"))
         password = request.form.get("password", "")
         role = request.form.get("role")
 
         error = None
         if not email or "@" not in email:
             error = "Please enter a valid email."
-        elif len(password) < 8:
-            error = "Password must be at least 8 characters."
-        elif role not in users.ROLES:
+        elif len(password) < firebase.MIN_PASSWORD_LENGTH:
+            error = f"Password must be at least {firebase.MIN_PASSWORD_LENGTH} characters."
+        elif role not in firebase.ROLES:
             error = "Please choose viewer or streamer."
         else:
-            user = users.create_user(email, password, role)
-            if user is None:
-                error = "An account with that email already exists."
+            try:
+                user = firebase.create_user(email, password, role)
+            except AuthError as e:
+                error = str(e)
             else:
                 _log_in(user)
                 return redirect(home_for(user["role"]))
@@ -43,8 +46,12 @@ def signup():
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        email = users.normalize_email(request.form.get("email"))
-        user = users.authenticate(email, request.form.get("password", ""))
+        email = firebase.normalize_email(request.form.get("email"))
+        try:
+            user = firebase.authenticate(email, request.form.get("password", ""))
+        except AuthError as e:
+            flash(str(e))
+            return render_template("auth/login.html", email=email), 401
         if user:
             _log_in(user)
             return redirect(home_for(user["role"]))
