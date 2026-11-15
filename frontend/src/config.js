@@ -10,7 +10,5 @@ export const CATEGORIES = [
 
 export const CATEGORY_LABELS = Object.fromEntries(CATEGORIES.map((c) => [c.value, c.label]))
 
-// IlmLive is invitation-only (see the sign-up screen). These codes are checked
-// IN THE BROWSER, so anyone can read them. That's fine for a demo; for real use,
-// check the code on your server (Flask) instead.
-export const REFERRAL_CODES = ['1STTEACHERS', 'CREATOR']
+// Must match MIN_PASSWORD_LENGTH in backend/app/firebase.py, which enforces it.
+export const MIN_PASSWORD_LENGTH = 8

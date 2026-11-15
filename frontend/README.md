@@ -2,13 +2,13 @@
  
 The website people see: sign in / create account, **Home**, **Discover**, **Account**, and the **Live room** (blank video block + chat + private notes). Built with plain **React + JavaScript** (no Figma, no TypeScript).
  
-Right now it runs entirely in the browser with demo data, so you can click through everything immediately. When your backend is ready you only replace the files in `src/services/` (see "Connecting a real backend").
+Accounts (sign up, sign in, name, email, password) go through the Flask backend to Firebase Authentication. Teachers, circles, chat and notes are still demo data in the browser (see "Connecting the rest to the backend").
  
 ---
  
 ## 1. Run it
  
-You need [Node.js](https://nodejs.org) (version 20 or newer). Then, in this folder:
+You need [Node.js](https://nodejs.org) (version 20 or newer), and the Flask backend running (see the root README; Vite forwards `/api/...` to it on port 5001). Then, in this folder:
  
 ```bash
 npm install     # downloads the libraries (once)
@@ -16,9 +16,7 @@ npm run dev     # starts the site, usually at http://localhost:5173
 npm test        # runs the automated tests
 ```
  
-Open the address `npm run dev` prints. Sign up with a referral code: **`1STTEACHERS`** or **`CREATOR`**.
- 
-> Open it from `http://localhost…`, not by double-clicking `index.html`. Password hashing only works on localhost or https.
+Open the address `npm run dev` prints. Learners can sign up any time. Teachers (streamers) also need an invite code the first time they create their account; the codes are set in `STREAMER_INVITE_CODES` in `backend/.env`. Signing in never needs a code. Passwords must be at least 8 characters.
  
 ---
  
@@ -29,13 +27,13 @@ frontend/
 ├── index.html            The one HTML page. React fills in <div id="root">.
 ├── package.json          Libraries + the npm commands above.
 ├── vite.config.js        Build tool settings (Vite).
-├── .gitignore            Tells git which files NOT to upload (see section 4).
+├── .gitignore            Tells git which files NOT to upload (node_modules, dist, secrets).
 ├── public/               Files served as-is (favicon).
 └── src/
     ├── main.jsx          Starts React.
     ├── App.jsx           Decides which page to show for the current URL.
     ├── router.jsx        A tiny router (URLs look like /#/discover).
-    ├── config.js         Topics list + referral codes.
+    ├── config.js         Topics list + password length.
     ├── styles.css        ALL the styling. Colours/fonts are variables at the top.
     │
     ├── pages/            One file per screen
@@ -54,8 +52,9 @@ frontend/
     │   ├── feed.js           builds the Home and Discover lists
     │   └── *.test.js         automated tests
     │
-    └── services/         ← THE ONLY PART TO REPLACE WHEN YOU HAVE A BACKEND
-        ├── auth.js           accounts, sign in/out, profile, follows
+    └── services/         Talking to data
+        ├── api.js            fetch helper for the Flask API
+        ├── auth.js           accounts via Flask/Firebase; profile extras + follows in localStorage
         ├── streams.js        teachers + circles (demo data)
         └── liveRoom.js       chat messages + notes
 ```
@@ -81,59 +80,19 @@ The demo circles are timed relative to when you load the page, so there are alwa
  
 ---
  
-## 4. Putting it on GitHub
+## 4. Connecting the rest to the backend
  
-Your repo (`soph743/ilmlive`) already has a `backend/` folder. Put this folder next to it, named `frontend/`:
+`services/auth.js` already talks to Flask (`/api/auth/...`), which stores accounts in Firebase. The rest is still in the browser's `localStorage`, which is **not** secure and not shared between people. Rewrite each function body to call the backend and keep the names and return shapes, and no page needs to change:
  
-```
-ilmlive/
-├── backend/     (your friend's Flask app)
-└── frontend/    (this project)
-```
- 
-Then, from the repo root:
- 
-```bash
-git checkout -b frontend-ui          # work on a branch, not main
-git add frontend
-git commit -m "Add React frontend"
-git push -u origin frontend-ui       # then open a Pull Request on GitHub
-```
- 
-### What `.gitignore` does
-`frontend/.gitignore` lists files git must **not** upload:
- 
-- `node_modules/` — thousands of library files; `npm install` recreates them.
-- `dist/` — build output; `npm run build` recreates it.
-- `.env`, `serviceAccount*.json`, `*-firebase-adminsdk-*.json` — **secrets** (Firebase admin keys etc.). Never commit these.
-Check what git will upload with `git status` before committing. If a file is listed that shouldn't be, add its name to `.gitignore`.
- 
-If your repo root has no `.gitignore` yet, add one there for the Python side too:
- 
-```
-__pycache__/
-*.pyc
-venv/
-.venv/
-.env
-```
- 
----
- 
-## 5. Connecting a real backend (Firebase or Flask)
- 
-The demo stores everything in the browser's `localStorage`. That is **not secure** and not shared between people, it's just so the site works today. The three files in `src/services/` list the functions the pages call. Rewrite each function body to call your backend and keep the names and return shapes, and no page needs to change:
- 
-- `auth.js` → Firebase Authentication (`createUserWithEmailAndPassword`, `signInWithEmailAndPassword`, …) or your Flask `/api/login`.
+- `auth.js` → profile extras (bio, location, learning goals, interests, preferences) and follows are still in `localStorage`, keyed by Firebase uid. Move them to a database (e.g. Firestore).
 - `streams.js` → `fetch('/api/streams')` (each stream needs: `id, slug, title, summary, category, categoryLabel, tags[], teacherId, hostName, startTime (ms), durationMinutes, viewerCount, featured`).
 - `liveRoom.js` → Firestore or Flask for chat and notes.
-To forward `/api/...` calls to Flask, uncomment the `proxy` line in `vite.config.js`.
  
-**Referral codes** (`src/config.js`) are checked in the browser, so anyone can read them in the page source. For real invitation-only signups, check the code on the server.
+Use `api()` from `services/api.js` for requests; it throws errors whose messages are safe to show.
  
 ---
  
-## 6. Still to build
+## 5. Still to build
  
 Real live video, the streamer view (the page a teacher uses to go live), the prayer-time countdown, and tests for the pages themselves. The recommender and schedule logic are already tested (`npm test`).
  

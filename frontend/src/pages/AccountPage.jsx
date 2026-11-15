@@ -60,6 +60,7 @@ function ProfileForm({ user }) {
     preferences: user.preferences,
   })
   const [status, setStatus] = useState(null)
+  const [busy, setBusy] = useState(false)
 
   const set = (field) => (event) => setForm({ ...form, [field]: event.target.value })
   const toggleInterest = (value) =>
@@ -72,13 +73,16 @@ function ProfileForm({ user }) {
   const setPreference = (key) => (event) =>
     setForm({ ...form, preferences: { ...form.preferences, [key]: event.target.checked } })
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
+    setBusy(true)
     try {
-      updateProfile(user.id, form)
+      await updateProfile(user.id, form)
       setStatus({ ok: true, message: 'Your changes have been saved.' })
     } catch (err) {
       setStatus({ ok: false, message: err.message })
+    } finally {
+      setBusy(false)
     }
   }
 
@@ -164,8 +168,8 @@ function ProfileForm({ user }) {
           <strong>Privacy</strong>
           Your notes and private teacher questions are visible only to you and the intended recipient.
         </div>
-        <button type="submit" className="btn btn--primary btn--block btn--lg">
-          Save changes
+        <button type="submit" className="btn btn--primary btn--block btn--lg" disabled={busy}>
+          {busy ? 'Saving…' : 'Save changes'}
         </button>
         <Status status={status} />
       </section>

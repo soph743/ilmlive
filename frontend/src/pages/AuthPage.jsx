@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AuthArt } from '../components/AuthArt.jsx'
 import { Brand } from '../components/Brand.jsx'
 import { Icon } from '../components/Icons.jsx'
+import { MIN_PASSWORD_LENGTH } from '../config.js'
 import { signIn, signUp } from '../services/auth.js'
 import { navigate } from '../router.jsx'
 
@@ -13,14 +14,14 @@ const COPY = {
   },
   signup: {
     title: 'Begin your journey',
-    subtitle: 'Create your invitation-only learning space.',
+    subtitle: 'Join to learn, or to teach if you’ve been invited.',
     button: 'Create my account',
   },
 }
 
 export function AuthPage() {
   const [mode, setMode] = useState('signin')
-  const [form, setForm] = useState({ name: '', email: '', password: '', referralCode: '' })
+  const [form, setForm] = useState({ name: '', email: '', password: '', role: 'viewer', inviteCode: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -112,6 +113,30 @@ export function AuthPage() {
 
           <form onSubmit={handleSubmit} noValidate>
             {mode === 'signup' && (
+              <div className="field">
+                <span>I’m joining to</span>
+                <div className="segmented" role="group" aria-label="Account type">
+                  <button
+                    type="button"
+                    aria-pressed={form.role === 'viewer'}
+                    className={form.role === 'viewer' ? 'is-active' : ''}
+                    onClick={() => setForm({ ...form, role: 'viewer' })}
+                  >
+                    Learn
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={form.role === 'streamer'}
+                    className={form.role === 'streamer' ? 'is-active' : ''}
+                    onClick={() => setForm({ ...form, role: 'streamer' })}
+                  >
+                    Teach
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {mode === 'signup' && (
               <label className="field">
                 <span>Full name</span>
                 <input
@@ -139,7 +164,7 @@ export function AuthPage() {
             <div className="field">
               <div className="field__row">
                 <label htmlFor="auth-password">Password</label>
-                {mode === 'signup' && <em id="auth-password-hint">8 characters minimum</em>}
+                {mode === 'signup' && <em id="auth-password-hint">{MIN_PASSWORD_LENGTH} characters minimum</em>}
               </div>
               <span className="field__password">
                 <Icon name="lock" className="icon field__lock" />
@@ -163,18 +188,18 @@ export function AuthPage() {
               </span>
             </div>
 
-            {mode === 'signup' && (
+            {mode === 'signup' && form.role === 'streamer' && (
               <label className="field">
-                <span>Referral code</span>
+                <span>Teacher invite code</span>
                 <input
-                  value={form.referralCode}
-                  onChange={setField('referralCode')}
+                  value={form.inviteCode}
+                  onChange={setField('inviteCode')}
                   placeholder="Enter your invitation code"
                   autoComplete="off"
                   required
                 />
                 <small className="field__hint">
-                  IlmLive is currently invitation-only. A referral code is required.
+                  Teaching on IlmLive is invitation-only. You only need this code once, to create your account.
                 </small>
               </label>
             )}

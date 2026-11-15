@@ -1,9 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// When the Flask backend is ready, requests to /api/... can be forwarded to it
-// by uncommenting the proxy below (Flask runs on port 5001 in your README).
+// Requests to /api/... are forwarded to the Flask backend (port 5001 by default),
+// so the browser sees one origin and Flask's session cookie just works.
 export default defineConfig({
   plugins: [react()],
-  // server: { proxy: { '/api': 'http://localhost:5001' } },
+  server: { proxy: { '/api': 'http://localhost:5001' } },
 })

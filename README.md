@@ -8,7 +8,7 @@ this project was created for the 2026 Tech Sisters hackathon.
 
 ### dev setup
 
-The repo has two apps: a Flask backend (`backend/`) and a React frontend (`frontend/`). They don't talk to each other yet (see [frontend status](#frontend-status)).
+The repo has two apps: a Flask JSON API (`backend/`) and the React website (`frontend/`). Run both, in two terminals.
 
 #### backend
 ```bash
@@ -20,11 +20,11 @@ cp .env.example .env
 python run.py
 ```
 
-Then open http://localhost:5001 (health check: http://localhost:5001/api/health).
+The API runs on http://localhost:5001 (health check: http://localhost:5001/api/health). There are no pages on Flask; the website is the React frontend.
 
 Set `PORT` in `.env` to change ports if needed.
 
-Accounts are stored in Firebase Authentication (see below). Passwords must be at least 6 characters (Firebase's default).
+Accounts are stored in Firebase Authentication (see below).
 
 #### frontend
 
@@ -33,15 +33,20 @@ Requires [Node.js](https://nodejs.org) 20+.
 ```bash
 cd frontend
 npm install     # once
-npm run dev     # http://localhost:5173
+npm run dev     # http://localhost:5173 (forwards /api/... to Flask on 5001)
 npm test        # recommender + schedule tests
 ```
 
-Open it from `http://localhost…` (not by double-clicking `index.html`): the demo's password hashing only works on localhost or https. Sign up with a referral code: **`1STTEACHERS`** or **`CREATOR`**.
+Open http://localhost:5173. If you change Flask's `PORT`, update the proxy in `frontend/vite.config.js` too.
 
-### frontend status
+### accounts
 
-The React frontend (Home, Discover, Account, Live room with chat + notes) currently runs entirely in the browser on demo data stored in `localStorage`. It is **not** connected to Flask or Firebase yet. To connect it, rewrite the functions in `frontend/src/services/` (`auth.js`, `streams.js`, `liveRoom.js`) and keep their names and return shapes. To forward `/api/...` calls to Flask on port 5001, uncomment the `proxy` line in `frontend/vite.config.js`. See `frontend/README.md` for details.
+- **Viewers** (learners) can sign up any time.
+- **Streamers** (teachers) need an invite code once, when they first create their account. Codes are set in `STREAMER_INVITE_CODES` in `backend/.env` (comma-separated) and checked on the server.
+- Signing in never needs a code.
+- Passwords must be at least 8 characters (checked in the frontend and enforced by Flask). Firebase stores and verifies them.
+
+Teachers, circles, chat, notes, and profile extras (bio, interests, follows…) are still demo data in the browser. See `frontend/README.md` for what's left to connect.
 
 ### firebase setup
 
@@ -62,14 +67,11 @@ backend/
 └── app/
     ├── __init__.py     # create_app() factory
     ├── config.py
-    ├── firebase.py     # Firebase Auth: sign up, log in, roles
-    ├── routes/
-    │   ├── __init__.py # registers blueprints
-    │   ├── main.py     # page routes (/, /viewer, /streamer)
-    │   ├── auth.py     # /signup, /login, /logout
-    │   └── api.py      # JSON API routes (/api/...)
-    ├── templates/
-    └── static/
+    ├── firebase.py     # Firebase Auth: sign up, log in, roles, updates
+    └── routes/
+        ├── __init__.py # registers blueprints
+        ├── auth.py     # /api/auth/... (signup, login, logout, me, credentials)
+        └── api.py      # other JSON API routes (/api/health)
 
 frontend/               # React + Vite (see frontend/README.md)
 ├── index.html
@@ -80,5 +82,5 @@ frontend/               # React + Vite (see frontend/README.md)
     ├── components/
     ├── hooks/
     ├── lib/            # pure logic (schedule, recommend, feed) + tests
-    └── services/       # data layer: replace to connect a real backend
+    └── services/       # data layer (auth.js calls Flask; the rest is still demo data)
 ```

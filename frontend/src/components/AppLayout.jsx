@@ -15,9 +15,12 @@ export function AppLayout({ path, children }) {
   const user = useUser()
   const isActive = (to) => path === to || (to === '/home' && path === '/')
 
-  const handleSignOut = () => {
-    signOut()
-    navigate('/')
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } finally {
+      navigate('/')
+    }
   }
 
   return (

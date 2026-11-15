@@ -1,4 +1,4 @@
-// A tiny wrapper around localStorage used by the demo "backend" in src/services.
+// A tiny wrapper around localStorage used by the browser-only data in src/services.
 //
 // - Values are stored as JSON under an "ilmlive:" prefix.
 // - If localStorage is blocked (private window, etc.) it falls back to memory,
@@ -28,6 +28,11 @@ export function write(key, value) {
   } catch {
     // keep the in-memory copy
   }
+  notifyChange()
+}
+
+/** Tell subscribers that something changed (also used for non-localStorage state). */
+export function notifyChange() {
   window.dispatchEvent(new Event(CHANGE_EVENT))
 }
 
