@@ -11,8 +11,8 @@ from flask import current_app
 
 ROLES = ("viewer", "streamer")
 
-# Firebase's default minimum password length.
-MIN_PASSWORD_LENGTH = 6
+# Stricter than Firebase's default of 6; checked before calling Firebase.
+MIN_PASSWORD_LENGTH = 8
 
 SIGN_IN_URL = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword"
 
@@ -49,16 +49,17 @@ def _user_dict(record):
     return {
         "uid": record.uid,
         "email": record.email,
+        "name": record.display_name or "",
         "role": (record.custom_claims or {}).get("role"),
     }
 
 
-def create_user(email, password, role):
+def create_user(email, password, role, name):
     """Create a Firebase user with the given role. Raises AuthError on failure."""
     if len(password) < MIN_PASSWORD_LENGTH:
         raise AuthError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
     try:
-        record = auth.create_user(email=email, password=password)
+        record = auth.create_user(email=email, password=password, display_name=name)
     except auth.EmailAlreadyExistsError:
         raise AuthError("An account with that email already exists.")
     except ValueError as e:
@@ -69,7 +70,27 @@ def create_user(email, password, role):
     except Exception:
         auth.delete_user(record.uid)
         raise
-    return {"uid": record.uid, "email": record.email, "role": role}
+    return {"uid": record.uid, "email": record.email, "name": name, "role": role}
+
+
+def get_user(uid):
+    """Return the user with this uid, or None if it no longer exists."""
+    try:
+        return _user_dict(auth.get_user(uid))
+    except auth.UserNotFoundError:
+        return None
+
+
+def update_user(uid, **fields):
+    """Update email, password and/or display_name. Raises AuthError on failure."""
+    if "password" in fields and len(fields["password"]) < MIN_PASSWORD_LENGTH:
+        raise AuthError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+    try:
+        return _user_dict(auth.update_user(uid, **fields))
+    except auth.EmailAlreadyExistsError:
+        raise AuthError("That email address is already in use.")
+    except ValueError as e:
+        raise AuthError(str(e))
 
 
 def authenticate(email, password):
