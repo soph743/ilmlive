@@ -1,0 +1,28 @@
+# Dependencies (re-created by `npm install`)
+node_modules/
+
+# Build output (re-created by `npm run build`)
+dist/
+dist-ssr/
+.vite/
+
+# Secrets: NEVER commit these
+.env
+.env.*
+!.env.example
+*.pem
+serviceAccount*.json
+*-firebase-adminsdk-*.json
+firebase-debug.log
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp

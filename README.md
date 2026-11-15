@@ -7,6 +7,10 @@ ilm live is a livestreaming platform for Islamic education.
 this project was created for the 2026 Tech Sisters hackathon.
 
 ### dev setup
+
+The repo has two apps: a Flask backend (`backend/`) and a React frontend (`frontend/`). They don't talk to each other yet (see [frontend status](#frontend-status)).
+
+#### backend
 ```bash
 cd backend
 python3 -m venv .venv
@@ -21,6 +25,23 @@ Then open http://localhost:5001 (health check: http://localhost:5001/api/health)
 Set `PORT` in `.env` to change ports if needed.
 
 Accounts are stored in Firebase Authentication (see below). Passwords must be at least 6 characters (Firebase's default).
+
+#### frontend
+
+Requires [Node.js](https://nodejs.org) 20+.
+
+```bash
+cd frontend
+npm install     # once
+npm run dev     # http://localhost:5173
+npm test        # recommender + schedule tests
+```
+
+Open it from `http://localhost…` (not by double-clicking `index.html`): the demo's password hashing only works on localhost or https. Sign up with a referral code: **`1STTEACHERS`** or **`CREATOR`**.
+
+### frontend status
+
+The React frontend (Home, Discover, Account, Live room with chat + notes) currently runs entirely in the browser on demo data stored in `localStorage`. It is **not** connected to Flask or Firebase yet. To connect it, rewrite the functions in `frontend/src/services/` (`auth.js`, `streams.js`, `liveRoom.js`) and keep their names and return shapes. To forward `/api/...` calls to Flask on port 5001, uncomment the `proxy` line in `frontend/vite.config.js`. See `frontend/README.md` for details.
 
 ### firebase setup
 
@@ -49,4 +70,15 @@ backend/
     │   └── api.py      # JSON API routes (/api/...)
     ├── templates/
     └── static/
+
+frontend/               # React + Vite (see frontend/README.md)
+├── index.html
+├── package.json
+├── vite.config.js
+└── src/
+    ├── pages/          # Auth, Home, Discover, Account, Live
+    ├── components/
+    ├── hooks/
+    ├── lib/            # pure logic (schedule, recommend, feed) + tests
+    └── services/       # data layer: replace to connect a real backend
 ```
